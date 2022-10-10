@@ -6,15 +6,13 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using CsvHelper;
 
-namespace scraper1
+namespace Castascraper
 {
     class Program
     {
         private static int Pages { get; set; } = 0;
         private static HtmlDocument MainHtml { get; set; } = new HtmlDocument();
-
         private static string RentalPage { get; set;} = "https://classifieds.castanet.net/cat/rentals/";
-
         private static int CurrentPage { get; set; } = 1;
         static async Task Main(string[] args)
         {
@@ -32,9 +30,8 @@ namespace scraper1
                 CurrentPage++;
                 html = await GetHtml(RentalPage +pageModifier + CurrentPage);
                 MainHtml.LoadHtml(html);
-                
             }
-            Console.WriteLine($"{Environment.NewLine}Getting individual rental details. This may take a while...");
+            Console.WriteLine($"{Environment.NewLine}Getting individual rental details.");
             for (int i = 0; i < adInfo.Count; i++)
             {
                 Console.Write($"\rProgress: {i}/{adInfo.Count - 1}");
@@ -53,7 +50,6 @@ namespace scraper1
             client.BaseAddress = new Uri("https://classifieds.castanet.net/");
             return client.GetStringAsync(link);
         }
-
         private static List<Listing> GetAds(HtmlDocument htmlDoc)
         {
             List<Listing> listingList = new List<Listing>();
@@ -103,7 +99,6 @@ namespace scraper1
             Console.WriteLine($"Found {pageCount} pages of ads");
             return pageCount;
         }
-
         public static string GetHouseType(HtmlDocument html)
         {
             var crumbs = from c in html.DocumentNode.Descendants("a")
@@ -135,8 +130,6 @@ namespace scraper1
                 }
             }
         }
-
     }
-
 }
 
