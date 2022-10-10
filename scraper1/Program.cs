@@ -24,14 +24,15 @@ namespace scraper1
             Pages = CountPages(MainHtml);
             List<Listing> adInfo = new();
             
-            while(CurrentPage < 3)
+            while(CurrentPage <= Pages)
             {
                 Console.Write($"\rGetting page: {CurrentPage}/{Pages}");
-                string pageModifier = $"?p={CurrentPage}";
+                string pageModifier = $"?p=";
                 adInfo.AddRange(GetAds(MainHtml));
-                html = await GetHtml(RentalPage + pageModifier);
-                MainHtml.LoadHtml(html);
                 CurrentPage++;
+                html = await GetHtml(RentalPage +pageModifier + CurrentPage);
+                MainHtml.LoadHtml(html);
+                
             }
             Console.WriteLine($"{Environment.NewLine}Getting individual rental details. This may take a while...");
             for (int i = 0; i < adInfo.Count; i++)
@@ -43,7 +44,6 @@ namespace scraper1
                 adInfo[i].SetCity(details[2]);
                 adInfo[i].SetType(details[3]);
                 adInfo[i].Link = "https://castanet.net" + adInfo[i].Link;
-                //Console.WriteLine($"{adInfo[i].Description} {Environment.NewLine}{adInfo[i].Bedrooms} beds {Environment.NewLine}{adInfo[i].Baths} baths{Environment.NewLine}{adInfo[i].Price.Trim()}{Environment.NewLine}");
             }
             MakeCSV(adInfo);
         }
@@ -119,8 +119,9 @@ namespace scraper1
         }
         public static void MakeCSV(List<Listing> list)
         {
+            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             Console.WriteLine($"{Environment.NewLine}Writing csv file");
-            using (var writer = new StreamWriter($"C:\\Users\\jesse\\Desktop\\houses.csv"))
+            using (var writer = new StreamWriter($"{path}\\AllListings.csv"))
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
             {
                 csv.WriteHeader<Listing>();

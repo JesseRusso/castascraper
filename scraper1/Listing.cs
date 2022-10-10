@@ -35,9 +35,5 @@ namespace scraper1
         {
             HouseType = type;
         }
-        public string GetRecord()
-        {
-            return $"{Description}, {HouseType}, {Bedrooms}, {Baths}, {City}, {Price}, {Link},";
-        }
     }
 }
