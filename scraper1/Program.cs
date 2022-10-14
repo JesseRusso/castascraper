@@ -40,7 +40,7 @@ namespace Castascraper
                 adInfo[i].SetBedsBaths(details[0], details[1]);
                 adInfo[i].SetCity(details[2]);
                 adInfo[i].SetType(details[3]);
-                adInfo[i].Link = "https://castanet.net" + adInfo[i].Link;
+                adInfo[i].Link = "https://classifieds.castanet.net" + adInfo[i].Link;
             }
             MakeCSV(adInfo);
         }
