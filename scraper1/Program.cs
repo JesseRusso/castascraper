@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using CsvHelper;
+using System.IO;
 
 namespace Castascraper
 {
@@ -38,9 +39,8 @@ namespace Castascraper
                 html = await GetHtml(adInfo[i].Link);
                 string[] details = ((string[])GetDetails(html));
                 adInfo[i].SetBedsBaths(details[0], details[1]);
-                adInfo[i].SetCity(details[2]);
-                adInfo[i].SetType(details[3]);
-                adInfo[i].Link = "https://classifieds.castanet.net" + adInfo[i].Link;
+                adInfo[i].SetType(details[2]);
+                adInfo[i].Link = adInfo[i].GetHyperlink();
             }
             MakeCSV(adInfo);
         }
@@ -61,14 +61,15 @@ namespace Castascraper
 
             foreach (var ad in ads)
             {
-                var name = ad.Descendants("h2").FirstOrDefault().InnerText;
-                var price = ad.Descendants("div").Where(x => x.GetClasses().Contains("price")).FirstOrDefault().InnerText;
+                var name = ad.Descendants("h2").FirstOrDefault()?.InnerText;
+                var price = ad.Descendants("div").Where(x => x.GetClasses().Contains("price")).FirstOrDefault()?.InnerText;
                 var link = ad.Attributes["href"].Value.ToString();
-                listingList.Add(new Listing(name, link, price));
+                var city = ad.Descendants("div").Where(x => x.GetClasses().Contains("pdate")).FirstOrDefault()?.Descendants("span").FirstOrDefault()?.InnerText;
+                listingList.Add(new Listing(name, link, price, city));
             }
             return listingList;
         }
-        public static Array GetDetails(string html)
+        private static Array GetDetails(string html)
         {
             var htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(html);
@@ -77,16 +78,13 @@ namespace Castascraper
                 .Where(x => x.HasClass("prod_right"))
                 .Select(x => x.Descendants("tr")).ToList();
 
-            string beds = bedsBaths[0].ElementAt(0).Elements("td").ElementAt(1).InnerText.ToString().Trim();
-            string baths = bedsBaths[0].ElementAt(1).Elements("td").ElementAt(1).InnerText.ToString().Trim();
+            string bedsRaw = bedsBaths[0].ElementAt(0).Elements("td").ElementAt(1).InnerText.ToString().Trim();
+            string beds = bedsRaw.Split(" ").FirstOrDefault();
+            string bathsRaw = bedsBaths[0].ElementAt(1).Elements("td").ElementAt(1).InnerText.ToString().Trim();
+            string baths = bathsRaw.Split(" ").FirstOrDefault();
 
-            var location = htmlDoc.DocumentNode
-                .SelectNodes("//div")
-                .Where(x => x.HasClass("prod_left"))
-                .Select(x => x.Descendants("tr")).ToList();
-            string city = location[0].ElementAt(2).Elements("td").ElementAt(1).InnerText.ToString().Trim().Split(",")[0];
             string type = GetHouseType(htmlDoc);
-            string[] array = new[] { beds, baths, city, type };
+            string[] array = new[] { beds, baths, type };
             return array;
         }
         private static int CountPages(HtmlDocument html)
@@ -114,9 +112,13 @@ namespace Castascraper
         }
         public static void MakeCSV(List<Listing> list)
         {
-            string path = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            DateTime dateTime = DateTime.UtcNow;
+            dateTime = dateTime.Date;
+            string date = dateTime.ToString("yyyy-MM-dd");
+
+            string path = Environment.CurrentDirectory;
             Console.WriteLine($"{Environment.NewLine}Writing csv file");
-            using (var writer = new StreamWriter($"{path}\\AllListings.csv"))
+            using (var writer = new StreamWriter($"{path}\\AllListings{date}.csv"))
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
             {
                 csv.WriteHeader<Listing>();
